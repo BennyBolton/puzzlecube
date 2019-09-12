@@ -1,0 +1,20 @@
+<!doctype html>
+<html>
+    <head>
+        <title> Rubiks </title>
+        <script src="bundle.js"></script>
+        <link rel="stylesheet" href="style.css" />
+    </head>
+    <body>
+        <div class="controls">
+            Size: <input class="setting" type="number" value="3" id="size" />
+            <button id="undo"> Undo </button>
+            <button id="redo"> Redo </button>
+            <button id="shuffle"> Shuffle </button>
+            <button id="solve" disabled="true"> Solve </button>
+        </div>
+        <div class="content">
+            <canvas id="render"></canvas>
+        </div>
+    </body>
+</html>

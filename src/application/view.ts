@@ -50,6 +50,10 @@ export class CubeView {
         this.animationCb = cb;
     }
 
+    isAnimating() {
+        return this.animation !== null;
+    }
+
     move(center: Vector) {
         this.center = center;
     }

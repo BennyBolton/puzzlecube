@@ -15,6 +15,14 @@ export class Throttle {
         }
     }
 
+    cancel() {
+        if (this.handle !== null) {
+            clearTimeout(this.handle);
+            this.handle = null;
+            this.cb = null;
+        }
+    }
+
     private emit() {
         this.handle = null;
         if (this.cb) this.cb();

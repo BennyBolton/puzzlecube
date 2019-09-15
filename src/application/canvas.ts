@@ -4,55 +4,34 @@
 import { Settings } from "./settings";
 import { shuffleCube } from "./shuffle";
 import { Renderer } from "./renderer";
-import { CubeView } from "./cubeview";
+import { CubeView } from "./view";
 import { Canvas, Texture, ClickHandler } from "../gl";
 import { CubeAction, CubeSlice } from "../cube";
 import { Vector } from "../math";
 
 
 
-function byId<T extends HTMLElement>(id: string) {
-    return document.getElementById(id) as T;
-}
-
-
-function byClass(name: string) {
-    return document.getElementsByClassName(name);
-}
-
-
-
-export class Application extends Canvas {
-    private readonly settings = new Settings("rubikSettings");
+export class CubeCanvas extends Canvas {
     private readonly renderer = Renderer.make(this);
-    private readonly pieceTexture = new Texture(this.ctx, "piece.png");
+    private readonly pieceTexture = this.createTexture("piece.png");
     private readonly undoList = [] as CubeAction[];
     private readonly redoList = [] as CubeAction[];
     private cube: CubeView;
     private actor: Iterator<CubeAction> | null = null;
 
-    constructor() {
-        super(byId("render"));
+    constructor(private readonly settings: Settings, el: HTMLCanvasElement) {
+        super(el);
 
-        for (let el of byClass("setting")) {
-            for (let child of el.children) {
-                if (child instanceof HTMLInputElement) {
-                    this.settings.add(child);
-                }
-            }
-        }
+        this.exposeOnResize = true;
 
-        this.configure();
+        this.pieceTexture.ready.then(() => this.expose());
+
         this.settings.onChange.bind(() => this.configure());
+        this.configure();
+    }
 
-        byId("undo").onclick = () => this.undo();
-        byId("redo").onclick = () => this.redo();
-        byId("shuffle").onclick = () => this.setActor(shuffleCube(this.cube.config));
-        byId("expand").onclick = () => {
-            byId("settingsContainer").classList.toggle("expanded");
-        };
-
-        this.triggerRender();
+    getConfig() {
+        return this.cube.config;
     }
 
     configure() {
@@ -62,12 +41,14 @@ export class Application extends Canvas {
             this.undoList.length = 0;
             this.redoList.length = 0;
         }
+        this.expose();
     }
 
     action(action: CubeAction, cb?: () => void) {
         this.cube.action(action, cb);
         this.undoList.push(action);
         this.redoList.length = 0;
+        this.expose(true);
     }
 
     undo() {
@@ -76,6 +57,7 @@ export class Application extends Canvas {
         let action = this.undoList.pop().invert();
         this.cube.action(action);
         this.redoList.push(action);
+        this.expose(true);
     }
 
     redo() {
@@ -84,6 +66,7 @@ export class Application extends Canvas {
         let action = this.redoList.pop().invert();
         this.cube.action(action);
         this.undoList.push(action);
+        this.expose(true);
     }
 
     setActor(actor: Iterable<CubeAction> | null) {
@@ -106,8 +89,6 @@ export class Application extends Canvas {
     }
 
     render(dt: number) {
-        this.triggerRender();
-
         let fov = +this.settings.get("fov");
         let zoom = +this.settings.get("zoom");
         let speed = +this.settings.get("speed");
@@ -132,6 +113,8 @@ export class Application extends Canvas {
 
         this.cube.move(new Vector(0, 0, depth));
         this.cube.render(this.renderer, dt);
+
+        if (this.cube.isAnimating()) this.expose();
     }
 
     click(handler: ClickHandler) {
@@ -172,6 +155,7 @@ export class Application extends Canvas {
             }
         }
         handler.onMotion.bind(({ dx, dy }) => {
+            this.expose();
             let distance = Math.hypot(dx, dy);
             if (distance > 1e-5) {
                 let axis = Vector.unit(-dy, dx, 0);

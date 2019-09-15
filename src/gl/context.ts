@@ -1,7 +1,7 @@
 "use strict";
 
 
-import { Throttle } from "../util";
+import { Event, Throttle } from "../util";
 
 
 
@@ -25,16 +25,12 @@ export class Context {
     }
 
     queueErrorCheck() {
-        this.errorThrottle.call(() => {
-            try {
-                this.checkError();
-            } catch (err) {
-                this.asyncError(err);
-            }
-        });
+        this.errorThrottle.call(() => this.checkError());
     }
 
     checkError() {
+        this.errorThrottle.cancel();
+
         let err = this.gl.getError();
         if (err == this.gl.NO_ERROR) return;
 
@@ -100,9 +96,5 @@ export class Context {
             case "lineStrip": return this.gl.LINE_STRIP;
             case "points": return this.gl.POINTS;
         }
-    }
-
-    asyncError(err: Error) {
-        // TODO Something
     }
 }

@@ -36,7 +36,7 @@ export class Program {
             throw new Error(`Failed to link program:\n${info}`);
         }
 
-        ctx.queueErrorCheck();
+        ctx.checkError();
     }
 
     finish() {

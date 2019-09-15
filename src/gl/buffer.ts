@@ -34,7 +34,7 @@ export class Buffer {
 
         this.buffer = ctx.gl.createBuffer();
 
-        ctx.queueErrorCheck();
+        ctx.checkError();
     }
 
     finish() {

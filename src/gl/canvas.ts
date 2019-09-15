@@ -56,11 +56,15 @@ export class Canvas {
     private readonly clickHandlers = [] as ClickHandler[];
     private lastFrame = Date.now() / 1000;
     private lastPosition = new ScreenPosition(0, 0);
+    private exposed = false;
+    public exposeOnResize = false;
 
     constructor(private readonly el: HTMLCanvasElement) {
         this.ctx = new Context(el.getContext("webgl"));
         this.ctx.gl.enable(this.ctx.gl.DEPTH_TEST);
         this.ctx.gl.enable(this.ctx.gl.CULL_FACE);
+
+        this.ctx.checkError();
 
         el.onmousedown = ev => {
             let handler = new ClickHandler(ev.button, this.mousePosition(ev));
@@ -91,6 +95,8 @@ export class Canvas {
         };
 
         el.oncontextmenu = ev => ev.preventDefault();
+
+        window.requestAnimationFrame(() => this._render());
     }
 
     private mousePosition(ev: MouseEvent): ScreenPosition;
@@ -141,20 +147,38 @@ export class Canvas {
         gl.clear(gl.COLOR_BUFFER_BIT | gl.DEPTH_BUFFER_BIT);
     }
 
-    triggerRender() {
-        window.requestAnimationFrame(() => this._render());
+    expose(clearTime = false) {
+        this.exposed = true;
+        if (clearTime) {
+            this.lastFrame = Date.now() / 1000;
+        }
     }
 
     private _render() {
-        this.el.width = this.el.clientWidth * window.devicePixelRatio;
-        this.el.height = this.el.clientHeight * window.devicePixelRatio;
+        window.requestAnimationFrame(() => this._render());
+
+        let width = this.el.clientWidth * window.devicePixelRatio;
+        let height = this.el.clientHeight * window.devicePixelRatio;
+
+        if (!this.exposed && this.exposeOnResize) {
+            if (width != this.el.width || height != this.el.height) {
+                this.exposed = true;
+            }
+        }
+
+        if (!this.exposed) return;
+
+        this.exposed = false;
+
+        this.el.width = width;
+        this.el.height = height;
         this.ctx.gl.viewport(0, 0, this.el.width, this.el.height);
 
         let time = Date.now() / 1000;
         this.render(time - this.lastFrame);
         this.lastFrame = time;
 
-        this.ctx.queueErrorCheck();
+        this.ctx.checkError();
     }
 
     click(click: ClickHandler) {}

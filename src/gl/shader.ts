@@ -19,7 +19,7 @@ export class Shader {
             throw new Error(`Unable to compile shader:\n${info}`);
         }
 
-        ctx.queueErrorCheck();
+        ctx.checkError();
     }
 
     finish() {

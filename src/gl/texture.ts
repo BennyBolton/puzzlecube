@@ -18,15 +18,13 @@ export class Texture {
         this.ready = new Promise<HTMLImageElement>((resolve, reject) => {
             let img = new Image();
             img.onload = () => resolve(img);
-            img.onerror = (ev, src, no, col, err) => {
+            img.onerror = (ev, file, no, col, err) => {
                 reject(err || new Error(`Failed to load texture: ${src}`));
             };
             img.src = src;
         }).then(img => (this.loadImage(img), this));
         
-        this.ready.catch(err => this.ctx.asyncError(err));
-        
-        this.ctx.queueErrorCheck();
+        this.ctx.checkError();
     }
 
     finish() {
@@ -62,6 +60,6 @@ export class Texture {
         gl.texParameteri(gl.TEXTURE_2D, gl.TEXTURE_MIN_FILTER, gl.LINEAR);
         gl.texParameteri(gl.TEXTURE_2D, gl.TEXTURE_MAG_FILTER, gl.LINEAR);
         
-        this.ctx.queueErrorCheck();
+        this.ctx.checkError();
     }
 }

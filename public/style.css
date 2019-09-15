@@ -4,24 +4,112 @@ html, body {
     margin: 0;
 }
 
-div.content {
+
+
+.hbox {
+    flex: 1 1 auto;
+    display: flex;
+    flex-direction: row;
+    width: 100%;
+    height: 100%;
+}
+
+.vbox {
+    flex: 1 1 auto;
     display: flex;
     flex-direction: column;
     width: 100%;
     height: 100%;
 }
 
-div.controls {
-    position: fixed;
-    top: 0;
-    z-index: 1;
-    padding: 10px;
-    width: 100%;
-    background-color: #ffffff77;
+
+
+.buttons {
+    flex: 0 0 auto;
+    background-color: #347;
+    border-bottom: 1px solid #000;
+    text-align: center;
 }
 
-canvas#render {
-    flex: 1 1 auto;
-    width: 100%;
+.buttons button {
+    margin: 0.7em 0.35em;
+}
+
+
+
+#settingsContainer {
+    flex: 0 0 auto;
+    width: 0;
+    transition: width 0.5s;
+    overflow: none;
+    background-color: #67b;
+    position: relative;
+}
+
+#settingsContainer.expanded {
+    width: 400px;
+}
+
+
+
+.settings {
+    overflow-y: auto;
+    position: absolute;
+    right: 0;
     height: 100%;
+    width: 400px;
+    background-color: #67b;
+    border-right: 1px solid #000;
+}
+
+.settings .section {
+    margin-bottom: 2em;
+}
+
+.settings .section .header {
+    background-color: #569;
+    border-bottom: 1px solid #347;
+    border-top: 1px solid #347;
+    padding: 0.5em 0.7em;
+    margin-bottom: 1em;
+}
+
+.settings .section .setting {
+    margin: 0 0.7em;
+    margin-top: 0.7em;
+    display: flex;
+    flex-direction: row;
+}
+
+.settings .section .setting .label {
+    flex: 1 0 0;
+}
+
+.settings .section .setting input {
+    flex: 1 0 0;
+}
+
+input[type="range"] {
+    height: 1em;
+}
+
+
+
+#expand {
+    flex: 0 0 auto;
+    width: 1.5em;
+    cursor: pointer;
+    background: #347 url("expand.svg") center no-repeat / contain;
+    border-right: 1px solid #000;
+}
+
+#settingsContainer.expanded + #expand {
+    background-image: url("collapse.svg");
+}
+
+
+
+#render {
+    flex: 1 1 0;
+    min-width: 0;
 }

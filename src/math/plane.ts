@@ -12,7 +12,7 @@ export class Plane {
         public readonly normal: Vector
     ) {}
 
-    intersect(line: Line) {
+    distanceTo(line: Line) {
         let den = this.normal.dot(line.direction);
         return this.point.add(line.point, -1).dot(this.normal) / den;
     }

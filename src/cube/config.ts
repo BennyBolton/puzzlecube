@@ -76,15 +76,13 @@ export class CubeSlice {
 
 
 export class CubeConfig {
-    public readonly data: CubeColor[];
+    public readonly data: Int8Array;
 
     constructor(public readonly dim: number) {
-        this.data = new Array(dim * dim * 6);
+        this.data = new Int8Array(dim * dim * 6);
 
-        for (let i = 0; i < 6; ++i) {
-            for (let j = 0; j < dim * dim; ++j) {
-                this.data[i * dim * dim + j] = i;
-            }
+        for (let i = 0; i < this.data.length; ++i) {
+            this.data[i] = Math.floor(6 * i / this.data.length);
         }
     }
 
@@ -117,6 +115,11 @@ export class CubeConfig {
         if (slice.index == this.dim - 1) {
             this.adjustFace(this.dim * this.dim * (slice.axis * 2 + 1), angle);
         }
+    }
+
+    getFace(face: number) {
+        let pitch = this.dim * this.dim;
+        return this.data.subarray(face * pitch, face * pitch + pitch);
     }
 
     private adjustFace(offset: number, angle: number) {

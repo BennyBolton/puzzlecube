@@ -11,7 +11,7 @@ export class Line {
         public readonly direction: Vector
     ) {}
 
-    closestPoint(point: Vector) {
+    distanceTo(point: Vector) {
         let den = this.direction.dot(this.direction);
         return point.add(this.point, -1).dot(this.direction) / den;
     }

@@ -1,7 +1,7 @@
 "use strict";
 
 
-import { Event, Throttle } from "../util";
+import { Throttle } from "../util";
 
 
 

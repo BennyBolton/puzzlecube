@@ -2,11 +2,11 @@
 
 
 
-export type Callback<T> = (value: T) => void;
+export type Callback<T extends any[]> = (...args: T) => void;
 
 
 
-export class Event<T> {
+export class Hook<T extends any[]> {
     private readonly listeners = new Set<Callback<T>>();
     private readonly oneTime = [] as Callback<T>[];
 
@@ -22,14 +22,14 @@ export class Event<T> {
         this.oneTime.push(cb);
     }
 
-    emit(value: T) {
+    emit(...args: T) {
         for (let cb of this.oneTime) {
-            cb(value);
+            cb(...args);
         }
         this.oneTime.length = 0;
 
         for (let cb of this.listeners) {
-            cb(value);
+            cb(...args);
         }
     }
 }

@@ -6,7 +6,7 @@ import { Texture } from "./texture";
 import { Shader } from "./shader";
 import { Buffer } from "./buffer";
 import { Line, Vector } from "../math";
-import { Event } from "../util";
+import { Hook } from "../util";
 
 
 
@@ -39,8 +39,8 @@ export class ScreenMotion extends ScreenPosition {
 
 
 export class ClickHandler {
-    public readonly onMotion = new Event<ScreenMotion>();
-    public readonly onRelease = new Event<ScreenPosition>();
+    public readonly onMotion = new Hook<[ScreenMotion]>();
+    public readonly onRelease = new Hook<[ScreenPosition]>();
 
     constructor(
         public readonly button: number,

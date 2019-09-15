@@ -1,5 +1,5 @@
 "use strict";
 
 
-export * from "./event";
+export * from "./hook";
 export * from "./throttle";

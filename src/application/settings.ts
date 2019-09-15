@@ -1,14 +1,14 @@
 "use strict";
 
 
-import { Event, Throttle } from "../util";
+import { Hook, Throttle } from "../util";
 
 
 
 export class Settings {
     private settings = {} as any;
 
-    public readonly onChange = new Event<null>();
+    public readonly onChange = new Hook<[]>();
     private readonly throttle = new Throttle();
 
     constructor(private readonly name: string) {
@@ -35,7 +35,7 @@ export class Settings {
     private change() {
         this.throttle.call(() => {
             localStorage.setItem(this.name, JSON.stringify(this.settings));
-            this.onChange.emit(null);
+            this.onChange.emit();
         });
     }
 }

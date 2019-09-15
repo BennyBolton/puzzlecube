@@ -6,8 +6,9 @@ import { shuffleCube } from "./shuffle";
 import { Renderer } from "./renderer";
 import { CubeView } from "./view";
 import { Canvas, Texture, ClickHandler } from "../gl";
-import { CubeAction, CubeSlice } from "../cube";
+import { CubeAction, CubeSlice, CubeConfig } from "../cube";
 import { Vector } from "../math";
+import { Hook } from "../util";
 
 
 
@@ -18,6 +19,10 @@ export class CubeCanvas extends Canvas {
     private readonly redoList = [] as CubeAction[];
     private cube: CubeView;
     private actor: Iterator<CubeAction> | null = null;
+
+    public readonly onNewCube = new Hook<[CubeConfig]>();
+    public readonly onAction =
+        new Hook<[CubeAction, Iterator<CubeAction> | undefined]>();
 
     constructor(private readonly settings: Settings, el: HTMLCanvasElement) {
         super(el);
@@ -40,22 +45,29 @@ export class CubeCanvas extends Canvas {
             this.cube = new CubeView(size);
             this.undoList.length = 0;
             this.redoList.length = 0;
+            this.onNewCube.emit(this.cube.config);
         }
         this.expose();
     }
 
-    action(action: CubeAction, cb?: () => void) {
-        this.cube.action(action, cb);
+    action(action: CubeAction, actor?: Iterator<CubeAction>) {
+        this.actor = actor;
+        this.takeAction(action, actor);
         this.undoList.push(action);
         this.redoList.length = 0;
+    }
+
+    private takeAction(action: CubeAction, actor?: Iterator<CubeAction>) {
+        this.cube.action(action, actor ? () => this.nextMove() : undefined);
         this.expose(true);
+        this.onAction.emit(action, actor);
     }
 
     undo() {
         if (this.undoList.length == 0) return;
 
         let action = this.undoList.pop().invert();
-        this.cube.action(action);
+        this.takeAction(action);
         this.redoList.push(action);
         this.expose(true);
     }
@@ -64,18 +76,19 @@ export class CubeCanvas extends Canvas {
         if (this.redoList.length == 0) return;
 
         let action = this.redoList.pop().invert();
-        this.cube.action(action);
+        this.takeAction(action);
         this.undoList.push(action);
         this.expose(true);
     }
 
-    setActor(actor: Iterable<CubeAction> | null) {
+    setActor(actor: Iterator<CubeAction> | null) {
         if (actor) {
-            this.actor = actor[Symbol.iterator]();
+            this.actor = actor;
             this.nextMove();
         } else {
             this.actor = null;
         }
+        return this.actor;
     }
 
     private nextMove() {
@@ -84,7 +97,7 @@ export class CubeCanvas extends Canvas {
         if (done) {
             this.actor = null;
         } else {
-            this.action(value, () => this.nextMove());
+            this.action(value, this.actor);
         }
     }
 

@@ -2,11 +2,10 @@
 
 
 import { Settings } from "./settings";
-import { shuffleCube } from "./shuffle";
 import { Renderer } from "./renderer";
 import { CubeView } from "./view";
-import { Canvas, Texture, ClickHandler } from "../gl";
-import { CubeAction, CubeSlice, CubeConfig } from "../cube";
+import { Canvas, ClickHandler } from "../gl";
+import { CubeAction, CubeConfig, Face } from "../model";
 import { Vector } from "../math";
 import { Hook } from "../util";
 
@@ -17,8 +16,9 @@ export class CubeCanvas extends Canvas {
     private readonly pieceTexture = this.createTexture("piece.png");
     private readonly undoList = [] as CubeAction[];
     private readonly redoList = [] as CubeAction[];
-    private cube: CubeView;
     private actor: Iterator<CubeAction> | null = null;
+
+    public cube: CubeView;
 
     public readonly onNewCube = new Hook<[CubeConfig]>();
     public readonly onAction =
@@ -35,17 +35,10 @@ export class CubeCanvas extends Canvas {
         this.configure();
     }
 
-    getConfig() {
-        return this.cube.config;
-    }
-
     configure() {
         let size = +this.settings.get("size");
         if (!this.cube || this.cube.size != size) {
-            this.cube = new CubeView(size);
-            this.undoList.length = 0;
-            this.redoList.length = 0;
-            this.onNewCube.emit(this.cube.config);
+            this.reset();
         }
         this.expose();
     }
@@ -61,6 +54,15 @@ export class CubeCanvas extends Canvas {
         this.cube.action(action, actor ? () => this.nextMove() : undefined);
         this.expose(true);
         this.onAction.emit(action, actor);
+    }
+
+    reset() {
+        let size = +this.settings.get("size");
+        this.cube = new CubeView(this.renderer, size);
+        this.undoList.length = 0;
+        this.redoList.length = 0;
+        this.onNewCube.emit(this.cube);
+        this.expose();
     }
 
     undo() {
@@ -125,7 +127,7 @@ export class CubeCanvas extends Canvas {
         this.renderer.setLight(lightFade);
 
         this.cube.move(new Vector(0, 0, depth));
-        this.cube.render(this.renderer, dt);
+        this.cube.render(dt);
 
         if (this.cube.isAnimating()) this.expose();
     }
@@ -143,24 +145,18 @@ export class CubeCanvas extends Canvas {
                     if (Math.abs(di) + Math.abs(dj) < 1e-3) return;
 
                     if (Math.abs(di) > Math.abs(dj)) {
-                        let axis = src.face < 4 ? 2 : 1;
-                        let index = Math.floor(src.j * this.cube.size);
-                        let angle = src.face == 2 || src.face == 3 ? -1 : 1;
-                        if (src.face % 2) angle = -angle;
-                        if (di < 0) angle = -angle;
                         this.action(new CubeAction(
-                            new CubeSlice(this.cube.size, axis, index),
-                            angle
+                            this.cube,
+                            ((src.face & Face.Axis) + 4) % 6,
+                            Math.floor(src.j * this.cube.size),
+                            di < 0 ? 1 : -1
                         ));
                     } else {
-                        let axis = src.face < 2 ? 1 : 0;
-                        let index = Math.floor(src.i * this.cube.size);
-                        let angle = src.face == 2 || src.face == 3 ? 1 : -1;
-                        if (src.face % 2 == 1) angle = -angle;
-                        if (dj < 0) angle = -angle;
                         this.action(new CubeAction(
-                            new CubeSlice(this.cube.size, axis, index),
-                            angle
+                            this.cube,
+                            ((src.face ^ Face.Positive) + 2) % 6,
+                            Math.floor(src.i * this.cube.size),
+                            dj < 0 ? -1 : 1
                         ));
                     }
                 });

@@ -2,7 +2,7 @@
 
 
 import { Context } from "./context";
-import { Vector } from "../math";
+import { Vector, UnitSpace } from "../math";
 
 
 
@@ -120,7 +120,14 @@ export class UniformMatrix2 extends Uniform {
 
 
 export class UniformMatrix3 extends Uniform {
-    set(mat: Float32List) {
+    set(mat: Float32Array | UnitSpace) {
+        if (mat instanceof UnitSpace) {
+            mat = new Float32Array([
+                mat.x.x, mat.x.y, mat.x.z,
+                mat.y.x, mat.y.y, mat.y.z,
+                mat.z.x, mat.z.y, mat.z.z
+            ]);
+        }
         if (mat.length != 9) throw new Error("Invalid length for matrix");
         this.bindProgram();
         this.ctx.gl.uniformMatrix3fv(this.location, false, mat);

@@ -11,6 +11,10 @@ import { Hook } from "../util";
 
 
 
+const MAX_CUBE_SIZE = 512;
+
+
+
 export class CubeCanvas extends Canvas {
     private readonly renderer = Renderer.make(this);
     private readonly pieceTexture = this.createTexture("piece.png");
@@ -35,9 +39,12 @@ export class CubeCanvas extends Canvas {
     }
 
     configure() {
-        let size = +this.settings.get("size");
+        let size = parseInt(this.settings.get("size"));
+        if (!Number.isFinite(size) || size < 2 || size > MAX_CUBE_SIZE) {
+            size = 3;
+        }
         if (!this.cube || this.cube.size != size) {
-            this.reset();
+            this.reset(size);
         }
         this.expose();
     }
@@ -55,8 +62,8 @@ export class CubeCanvas extends Canvas {
         this.onAction.emit(action, actor);
     }
 
-    reset() {
-        let size = +this.settings.get("size");
+    reset(size?: number) {
+        if (!size) size = this.cube ? this.cube.size : 3;
         this.cube = new CubeView(this.renderer, size);
         this.undoList.length = 0;
         this.redoList.length = 0;

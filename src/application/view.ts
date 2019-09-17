@@ -1,8 +1,8 @@
 "use strict";
 
 
-import { CubeConfig, CubeAction, CubeFace, Axis, Face } from "../model";
-import { Renderer } from "./renderer";
+import { CubeConfig, CubeAction, Face, Axis } from "../model";
+import { Renderer, Rect } from "./renderer";
 import { Vector, Line, Plane, UnitSpace } from "../math";
 
 
@@ -38,77 +38,55 @@ export class CubeView extends CubeConfig {
     ) {
         super(size);
 
-        let points = new Float32Array(
-            (this.size * this.size * 6 + (this.size - 1) * 12) * 42);
+        renderer.setPoints(this.size, (function *() {
+            for (let face = 0; face < 6; ++face) {
+                let { v, iv, jv } = CubeView.faceDimensions[face];
 
-        for (let face = 0; face < 6; ++face) {
-            let faceAxis = (face & Face.Axis) / 2;
-            let iAxis = (faceAxis + 1) % 3;
-            let jAxis = (faceAxis + 2) % 3;
-
-            for (let i = 0; i < size; ++i) {
-                for (let j = 0; j < size; ++j) {
-                    let rect = points.subarray(
-                        ((face * size + j) * size + i) * 42);
-
-                    rect[6] = face;
-                    if (face & Face.Positive) {
-                        rect[faceAxis] = size - 1;
-                        rect[faceAxis + 3] = 1;
-                    }
-                    rect[iAxis] = (face & Face.Positive) ? i : size - i - 1;
-                    rect[jAxis] = j;
-
-                    rect.copyWithin(7, 0, 7);
-                    rect.copyWithin(14, 0, 7);
-                    rect.copyWithin(21, 0, 7);
-
-                    rect[((face & Face.Positive) ? 10 : 3) + iAxis] = 1;
-                    rect[((face & Face.Positive) ? 17 : 24) + iAxis] = 1;
-                    rect[17 + jAxis] = 1;
-                    rect[24 + jAxis] = 1;
-
-                    rect.copyWithin(28, 0, 7);
-                    rect.copyWithin(35, 14, 21);
-                }
-            }
-        }
-
-        let offset = this.size * this.size * 252;
-        for (let face = 0; face < 6; ++face) {
-            let faceAxis = (face & Face.Axis) / 2;
-            let iAxis = (faceAxis + 1) % 3;
-            let jAxis = (faceAxis + 2) % 3;
-
-            for (let i = 1; i < this.size; ++i) {
-                let rect = points.subarray(
-                    offset + ((this.size - 1) * face + i - 1) * 42);
-
-                rect[6] = face;
+                let corner = Vector.zero;
+                let offset = Vector.zero;
                 if (face & Face.Positive) {
-                    rect[faceAxis] = size - i - 1;
-                    rect[faceAxis + 3] = 1;
+                    corner = v.scale(size - 1);
+                    offset = v;
                 } else {
-                    rect[faceAxis] = i;
+                    corner = iv.scale(1 - size);
+                    offset = iv.neg();
                 }
 
-                rect[iAxis] = size;
-                rect[jAxis] = size;
-
-                rect.copyWithin(7, 0, 7);
-                rect.copyWithin(14, 0, 7);
-                rect.copyWithin(21, 0, 7);
-
-                rect[((face & Face.Positive) ? iAxis : jAxis) + 10] = -size;
-                rect[((face & Face.Positive) ? jAxis : iAxis) + 24] = -size;
-                rect[17 + iAxis] = -size;
-                rect[17 + jAxis] = -size;
-
-                rect.copyWithin(28, 0, 7);
-                rect.copyWithin(35, 14, 21);
+                for (let j = 0; j < size; ++j) {
+                    for (let i = 0; i < size; ++i) {
+                        yield new Rect(
+                            face,
+                            corner.add(iv, i).add(jv, j),
+                            offset,
+                            iv, jv
+                        );
+                    }
+                }
             }
-        }
-        renderer.setPoints(this.size, points);
+
+            for (let face = 0; face < 6; ++face) {
+                let { v, iv, jv } = CubeView.faceDimensions[face];
+
+                let vStart = new Vector(size, size, size);
+                let vOffset = Vector.zero;
+                if (face & Face.Positive) {
+                    vOffset = v;
+                    v = v.neg();
+                }
+                iv = iv.scale((face & Face.Positive) ? -size : size);
+                jv = jv.scale(-size);
+
+                for (let i = 1; i < size; ++i) {
+                    yield new Rect(
+                        face,
+                        vStart.add(v, i).add(vOffset, -1),
+                        vOffset,
+                        (face & Face.Positive) ? iv : jv,
+                        (face & Face.Positive) ? jv : iv
+                    );
+                }
+            }
+        })());
         this.updateColors();
     }
 
@@ -167,7 +145,6 @@ export class CubeView extends CubeConfig {
     }
 
     render(dt: number) {
-        let rotationAxis = Vector.X, rotationAngle = 0;
         if (this.animation) {
             this.animationProgress += dt;
             if (this.animationProgress > 1) {
@@ -179,15 +156,12 @@ export class CubeView extends CubeConfig {
             }
         }
 
+        let rotationAxis = Vector.X;
+        let rotationAngle = 0;
+
         if (this.animation) {
-            switch (this.animation.face) {
-                case Face.Left: rotationAxis = this.space.x.neg(); break;
-                case Face.Right: rotationAxis = this.space.x; break;
-                case Face.Bottom: rotationAxis = this.space.y.neg(); break;
-                case Face.Top: rotationAxis = this.space.y; break;
-                case Face.Back: rotationAxis = this.space.z.neg(); break;
-                case Face.Front: rotationAxis = this.space.z; break;
-            }
+            rotationAxis = this.space.map(
+                CubeView.faceDimensions[this.animation.face].v);
             let progress = Math.cos(this.animationProgress * Math.PI) + 1;
             rotationAngle = -this.animation.angle * Math.PI * progress / 4;
         }

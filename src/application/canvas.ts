@@ -27,12 +27,11 @@ export class CubeCanvas extends Canvas {
     constructor(private readonly settings: Settings, el: HTMLCanvasElement) {
         super(el);
 
-        this.exposeOnResize = true;
-
-        this.pieceTexture.ready.then(() => this.expose());
-
         this.settings.onChange.bind(() => this.configure());
         this.configure();
+
+        this.exposeOnResize = true;
+        this.pieceTexture.ready.then(() => this.expose());
     }
 
     configure() {

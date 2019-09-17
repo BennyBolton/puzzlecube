@@ -10,6 +10,18 @@ import vertexSrc from "./shaders/vertex.glsl";
 
 
 
+export class Rect {
+    constructor(
+        public readonly face: number,
+        public readonly point: Vector,
+        public readonly offset: Vector,
+        public readonly di: Vector,
+        public readonly dj: Vector,
+    ) {}
+}
+
+
+
 export class Renderer extends Program {
     private readonly uSize = this.uniformFloat("uSize");
     private readonly uProjection = this.uniformMatrix4("uProjection");
@@ -31,15 +43,6 @@ export class Renderer extends Program {
     private constructor(ctx: Context, vertex: Shader, fragment: Shader) {
         super(ctx, vertex, fragment);
 
-        let buffer = new Float32Array([
-            0, 0,
-            1, 0,
-            1, 1,
-
-            0, 0,
-            1, 1,
-            0, 1
-        ]);
         this.points = new Buffer(ctx, "float", 3, 3, 1);
         this.colors = new Buffer(ctx, "float", 1);
     }
@@ -76,10 +79,43 @@ export class Renderer extends Program {
         this.uLightFade.set(fade);
     }
 
-    setPoints(size: number, points: Float32Array) {
+    setPoints(size: number, rects: Iterable<Rect>) {
         this.uSize.set(size);
-        this.points.data(points, true);
-        this.count = points.length / 7;
+        let buffer = new Float32Array(size * size * 252 + (size - 1) * 252);
+        let i = 0;
+        for (let { face, point, offset, di, dj } of rects) {
+            let p1 = [
+                point.x, point.y, point.z,
+                offset.x, offset.y, offset.z,
+                face
+            ];
+            let p2 = [
+                point.x, point.y, point.z,
+                offset.x + di.x, offset.y + di.y, offset.z + di.z,
+                face
+            ];
+            let p3 = [
+                point.x, point.y, point.z,
+                offset.x + di.x + dj.x,
+                offset.y + di.y + dj.y,
+                offset.z + di.z + dj.z,
+                face
+            ];
+            let p4 = [
+                point.x, point.y, point.z,
+                offset.x + dj.x, offset.y + dj.y, offset.z + dj.z,
+                face
+            ];
+            buffer.set(p1, i);
+            buffer.set(p2, i + 7);
+            buffer.set(p3, i + 14);
+            buffer.set(p1, i + 21);
+            buffer.set(p3, i + 28);
+            buffer.set(p4, i + 35);
+            i += 42;
+        }
+        this.points.data(buffer, true);
+        this.count = buffer.length / 7;
     }
 
     setColors(colors: ArrayLike<number>) {

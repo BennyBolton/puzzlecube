@@ -81,26 +81,27 @@ void main() {
 
     int sliceAxis = getSliceAxis();
     if (sliceAxis >= 0 && uAnimate[sliceAxis] < 0.0) {
-        point = vec3(0.0, 0.0, 0.0);
-    }
-
-    bool useAnimation = (aPoint.x == uAnimate.x
-        || aPoint.y == uAnimate.y
-        || aPoint.z == uAnimate.z);
-
-    if (useAnimation) {
-        point = uCenter + uAnimateTransform * point;
-        normal = uAnimateTransform * normal;
+        // Cull the point
+        gl_Position = vec4(0.0, 0.0, -2.0, 1.0);
     } else {
-        point = uCenter + uTransform * point;
-        normal = uTransform * normal;
+        bool useAnimation = (aPoint.x == uAnimate.x
+            || aPoint.y == uAnimate.y
+            || aPoint.z == uAnimate.z);
+
+        if (useAnimation) {
+            point = uCenter + uAnimateTransform * point;
+            normal = uAnimateTransform * normal;
+        } else {
+            point = uCenter + uTransform * point;
+            normal = uTransform * normal;
+        }
+
+        float cosine = max(-dot(normalize(point), normal), 0.0);
+        float fade = 1.0 - uLightFade + uLightFade * cosine;
+        vColor = vec4(fade, fade, fade, 1.0) * getColor();
+
+        vTexcoord = getTexCoord();
+
+        gl_Position = uProjection * vec4(point, 1.0);
     }
-
-    float cosine = max(-dot(normalize(point), normal), 0.0);
-    float fade = 1.0 - uLightFade + uLightFade * cosine;
-    vColor = vec4(fade, fade, fade, 1.0) * getColor();
-
-    vTexcoord = getTexCoord();
-
-    gl_Position = uProjection * vec4(point, 1.0);
 }

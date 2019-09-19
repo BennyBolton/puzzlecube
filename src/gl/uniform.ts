@@ -50,7 +50,7 @@ export class UniformFloat3 extends Uniform {
         if (x1 instanceof Vector) {
             this.ctx.gl.uniform3f(this.location, x1.x, x1.y, x1.z);
         } else {
-            this.ctx.gl.uniform3f(this.location, x1, x2, x3);
+            this.ctx.gl.uniform3f(this.location, x1, x2 as number, x3 as number);
         }
         this.ctx.queueErrorCheck();
     }

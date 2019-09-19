@@ -60,7 +60,10 @@ export class Canvas {
     public exposeOnResize = false;
 
     constructor(private readonly el: HTMLCanvasElement) {
-        this.ctx = new Context(el.getContext("webgl"));
+        let gl = el.getContext("webgl");
+        if (!gl) throw new Error("Unable to create webgl context");
+
+        this.ctx = new Context(gl);
         this.ctx.gl.enable(this.ctx.gl.DEPTH_TEST);
         this.ctx.gl.enable(this.ctx.gl.CULL_FACE);
 

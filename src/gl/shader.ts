@@ -9,14 +9,15 @@ export class Shader {
     private shader: WebGLShader | null = null;
 
     constructor(private readonly ctx: Context, src: string, type: number) {
-        this.shader = ctx.gl.createShader(type);
-        ctx.gl.shaderSource(this.shader, src);
-        ctx.gl.compileShader(this.shader);
+        if (this.shader = ctx.gl.createShader(type)) {
+            ctx.gl.shaderSource(this.shader, src);
+            ctx.gl.compileShader(this.shader);
 
-        if (!ctx.gl.getShaderParameter(this.shader, ctx.gl.COMPILE_STATUS)) {
-            let info = ctx.gl.getShaderInfoLog(this.shader);
-            ctx.gl.deleteShader(this.shader);
-            throw new Error(`Unable to compile shader:\n${info}`);
+            if (!ctx.gl.getShaderParameter(this.shader, ctx.gl.COMPILE_STATUS)) {
+                let info = ctx.gl.getShaderInfoLog(this.shader);
+                ctx.gl.deleteShader(this.shader);
+                throw new Error(`Unable to compile shader:\n${info}`);
+            }
         }
 
         ctx.checkError();

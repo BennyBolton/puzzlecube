@@ -7,10 +7,12 @@ import { Vector, Line, Plane, UnitSpace } from "../math";
 
 
 
-interface FacePosition {
-    readonly face: number;
-    readonly i: number;
-    readonly j: number;
+export class FacePosition {
+    constructor(
+        readonly face: number,
+        readonly i: number,
+        readonly j: number
+    ) {}
 }
 
 
@@ -99,7 +101,7 @@ export class CubeView extends CubeConfig {
         this.updateColors();
         this.animation = action;
         this.animationProgress = 0;
-        this.animationCb = cb;
+        this.animationCb = cb || null;
         this.renderer.setAnimation(action);
     }
 
@@ -138,26 +140,26 @@ export class CubeView extends CubeConfig {
 
             if (i >= 0 && i <= 1 && j >= 0 && j <= 1 && distance < closest) {
                 closest = distance;
-                bestFace = { face, i, j };
+                bestFace = new FacePosition(face, i, j);
             }
         };
         return bestFace;
     }
 
     render(dt: number) {
+        let rotationAxis = Vector.X;
+        let rotationAngle = 0;
+        let cb: (() => void) | null = null;
+
         if (this.animation) {
-            this.animationProgress += dt;
+            this.animationProgress += dt / Math.abs(this.animation.angle);
             if (this.animationProgress > 1) {
-                let cb = this.animationCb;
+                cb = this.animationCb;
                 this.animationProgress = 1;
                 this.animation = null;
                 this.animationCb = null;
-                if (cb) cb();
             }
         }
-
-        let rotationAxis = Vector.X;
-        let rotationAngle = 0;
 
         if (this.animation) {
             rotationAxis = this.space.map(
@@ -168,5 +170,7 @@ export class CubeView extends CubeConfig {
 
         let animatedSpace = this.space.rotate(rotationAxis, rotationAngle);
         this.renderer.render(this.center, this.space, animatedSpace);
+
+        if (cb) cb();
     }
 }

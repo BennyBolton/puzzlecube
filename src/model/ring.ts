@@ -3,6 +3,7 @@
 
 import { CubeConfig, Face } from "./config";
 import { CubeRow } from "./row";
+import { normalizeInt } from "../util";
 
 
 
@@ -27,13 +28,14 @@ export class CubeRing {
 
     static makeStandard(config: CubeConfig, face: Face, offset: number) {
         switch (face) {
-            case Face.Left: return this.make(config, face, offset, Face.Back, Face.Bottom);
-            case Face.Right: return this.make(config, face, offset, Face.Back, Face.Top);
-            case Face.Bottom: return this.make(config, face, offset, Face.Left, Face.Back);
-            case Face.Top: return this.make(config, face, offset, Face.Left, Face.Front);
-            case Face.Back: return this.make(config, face, offset, Face.Bottom, Face.Left);
-            case Face.Front: return this.make(config, face, offset, Face.Bottom, Face.Right);
+            case Face.Left: return this.make(config, face, offset, Face.Top, Face.Back);
+            case Face.Right: return this.make(config, face, offset, Face.Bottom, Face.Back);
+            case Face.Bottom: return this.make(config, face, offset, Face.Front, Face.Left);
+            case Face.Top: return this.make(config, face, offset, Face.Back, Face.Left);
+            case Face.Back: return this.make(config, face, offset, Face.Right, Face.Bottom);
+            case Face.Front: return this.make(config, face, offset, Face.Left, Face.Bottom);
         }
+        throw new Error("Invalid face");
     }
 
     getRow(i: number) {
@@ -43,6 +45,7 @@ export class CubeRing {
             case 2: return this.row3;
             case 3: return this.row4;
         }
+        throw new Error("Invalid row index");
     }
 
     get(i: number) {
@@ -76,8 +79,7 @@ export class CubeRing {
 
     rotate(angle: number) {
         const rows = [this.row1, this.row2, this.row3, this.row4];
-        angle %= 4;
-        if (angle < 0) angle += 4;
+        angle = normalizeInt(angle, 4);
 
         return new CubeRing(
             this.config,

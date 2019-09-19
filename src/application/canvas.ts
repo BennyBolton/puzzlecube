@@ -3,8 +3,8 @@
 
 import { Settings } from "./settings";
 import { Renderer } from "./renderer";
-import { CubeView } from "./view";
-import { Canvas, ClickHandler } from "../gl";
+import { FacePosition, CubeView } from "./view";
+import { Canvas, ClickHandler, ScreenPosition } from "../gl";
 import { CubeAction, CubeConfig, Face } from "../model";
 import { Vector } from "../math";
 import { Hook } from "../util";
@@ -50,7 +50,7 @@ export class CubeCanvas extends Canvas {
     }
 
     action(action: CubeAction, actor?: Iterator<CubeAction>) {
-        this.actor = actor;
+        this.actor = actor || null;
         this.takeAction(action, actor);
         this.undoList.push(action);
         this.redoList.length = 0;
@@ -72,21 +72,23 @@ export class CubeCanvas extends Canvas {
     }
 
     undo() {
-        if (this.undoList.length == 0) return;
-
-        let action = this.undoList.pop().invert();
-        this.takeAction(action);
-        this.redoList.push(action);
-        this.expose(true);
+        let action = this.undoList.pop();
+        if (action) {
+            action = action.invert();
+            this.takeAction(action);
+            this.redoList.push(action);
+            this.expose(true);
+        }
     }
 
     redo() {
-        if (this.redoList.length == 0) return;
-
-        let action = this.redoList.pop().invert();
-        this.takeAction(action);
-        this.undoList.push(action);
-        this.expose(true);
+        let action = this.redoList.pop();
+        if (action) {
+            action = action.invert();
+            this.takeAction(action);
+            this.undoList.push(action);
+            this.expose(true);
+        }
     }
 
     setActor(actor: Iterator<CubeAction> | null) {
@@ -140,32 +142,11 @@ export class CubeCanvas extends Canvas {
 
     click(handler: ClickHandler) {
         if (handler.button == 0) {
-            let fov = +this.settings.get("fov")
+            let fov = +this.settings.get("fov");
             let src = this.cube.intersect(handler.pos.getLine(fov));
             if (src) {
                 this.setActor(null);
-                handler.onRelease.bind(pos => {
-                    let dst = this.cube.intersectFace(src.face, pos.getLine(fov));
-                    let di = dst.i - src.i;
-                    let dj = dst.j - src.j;
-                    if (Math.abs(di) + Math.abs(dj) < 1e-3) return;
-
-                    if (Math.abs(di) > Math.abs(dj)) {
-                        this.action(new CubeAction(
-                            this.cube,
-                            ((src.face & Face.Axis) + 4) % 6,
-                            Math.floor(src.j * this.cube.size),
-                            di < 0 ? 1 : -1
-                        ));
-                    } else {
-                        this.action(new CubeAction(
-                            this.cube,
-                            ((src.face ^ Face.Positive) + 2) % 6,
-                            Math.floor(src.i * this.cube.size),
-                            dj < 0 ? -1 : 1
-                        ));
-                    }
-                });
+                handler.onRelease.bind(this.manualAction.bind(this, src));
                 return;
             }
         }
@@ -177,5 +158,29 @@ export class CubeCanvas extends Canvas {
                 this.cube.rotate(axis, 3 * distance);
             }
         });
+    }
+
+    manualAction(src: FacePosition, pos: ScreenPosition) {
+        let fov = +this.settings.get("fov");
+        let dst = this.cube.intersectFace(src.face, pos.getLine(fov));
+        let di = dst.i - src.i;
+        let dj = dst.j - src.j;
+        if (Math.abs(di) + Math.abs(dj) < 1e-3) return;
+
+        if (Math.abs(di) > Math.abs(dj)) {
+            this.action(new CubeAction(
+                this.cube,
+                ((src.face & Face.Axis) + 4) % 6,
+                Math.floor(src.j * this.cube.size),
+                di < 0 ? 1 : -1
+            ));
+        } else {
+            this.action(new CubeAction(
+                this.cube,
+                ((src.face ^ Face.Positive) + 2) % 6,
+                Math.floor(src.i * this.cube.size),
+                dj < 0 ? -1 : 1
+            ));
+        }
     }
 }

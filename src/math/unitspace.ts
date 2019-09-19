@@ -32,6 +32,7 @@ export class UnitSpace {
             x = x.x;
         } else {
             y = y as number;
+            z = z as number;
         }
         if (!c) c = Vector.zero;
         return new Vector(

@@ -21,21 +21,21 @@ export class Program {
         this.bind = this.bind.bind(this);
 
         this.program = ctx.gl.createProgram();
+        if (this.program) {
+            for (let shader of shaders) {
+                shader.attachTo(this.program);
+            }
+            ctx.gl.linkProgram(this.program);
+            for (let shader of shaders) {
+                shader.detachFrom(this.program);
+            }
 
-        for (let shader of shaders) {
-            shader.attachTo(this.program);
+            if (!ctx.gl.getProgramParameter(this.program, ctx.gl.LINK_STATUS)) {
+                let info = ctx.gl.getProgramInfoLog(this.program);
+                ctx.gl.deleteProgram(this.program);
+                throw new Error(`Failed to link program:\n${info}`);
+            }
         }
-        ctx.gl.linkProgram(this.program);
-        for (let shader of shaders) {
-            shader.detachFrom(this.program);
-        }
-
-        if (!ctx.gl.getProgramParameter(this.program, ctx.gl.LINK_STATUS)) {
-            let info = ctx.gl.getProgramInfoLog(this.program);
-            ctx.gl.deleteProgram(this.program);
-            throw new Error(`Failed to link program:\n${info}`);
-        }
-
         ctx.checkError();
     }
 

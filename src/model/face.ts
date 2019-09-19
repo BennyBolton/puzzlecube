@@ -2,6 +2,7 @@
 
 
 import { CubeConfig, Face } from "./config";
+import { normalizeInt } from "../util";
 
 
 
@@ -24,12 +25,12 @@ export class CubeFace {
             iStep = config.size;
         }
 
-        if ((iFrom & Face.Positive) == (axisInOrder ? (face & Face.Positive) : 0)) {
+        if ((iFrom & Face.Positive) == (axisInOrder ? (face & Face.Positive) : 1)) {
             offset += iStep * config.size - iStep;
             iStep = -iStep;
         }
 
-        if ((jFrom & Face.Positive) == (axisInOrder ? 0 : (face & Face.Positive))) {
+        if ((jFrom & Face.Positive) == (axisInOrder ? 1 : (face & Face.Positive))) {
             offset += jStep * config.size - jStep;
             jStep = -jStep;
         }
@@ -96,12 +97,12 @@ export class CubeFace {
     }
 
     rotate(angle: number) {
-        angle %= 4;
-        switch (angle < 0 ? angle + 4 : angle) {
+        switch (normalizeInt(angle, 4)) {
             case 0: return this;
             case 1: return this.transform(true, false, true);
             case 2: return this.transform(false, true, true);
             case 3: return this.transform(true, true, false);
         }
+        throw new Error("Internal error");
     }
 }

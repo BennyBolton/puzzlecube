@@ -2,6 +2,7 @@
 
 
 import { Settings, CubeCanvas, shuffleCube } from "./application";
+import { solveCube } from "./solver";
 import { CubeAction } from "./model";
 
 
@@ -18,10 +19,11 @@ class Status {
     ) {}
 
     countMove(action: CubeAction) {
-        if (this.moves++ == 0) {
+        if (this.moves == 0) {
             this.start = Date.now();
             this.interval = setInterval(() => this.updateStatus(), 50);
         }
+        this.moves += Math.abs(action.angle);
         if (this.end === null && action.config.isSolved()) {
             this.end = Date.now();
             if (this.interval) {
@@ -60,27 +62,36 @@ class Status {
 
 
 window.onload = () => {
-    const errorContainer = document.getElementById("errorContainer");
-    const errorMessage = document.getElementById("errorMessage");
-    const render = document.getElementById("render") as HTMLCanvasElement;
-    const undo = document.getElementById("undo");
-    const reset = document.getElementById("reset");
-    const redo = document.getElementById("redo");
-    const shuffle = document.getElementById("shuffle");
-    const expand = document.getElementById("expand");
-    const settingsContainer = document.getElementById("settingsContainer");
-    const moves = document.getElementById("moves");
-    const time = document.getElementById("time");
+    function getEl(id: string) {
+        let el = document.getElementById(id);
+        if (!el) {
+            throw new Error(`Unable to find el '${id}'`);
+        }
+        return el;
+    }
+    const errorContainer = getEl("errorContainer");
+    const errorMessage = getEl("errorMessage");
+    const render = getEl("render") as HTMLCanvasElement;
+    const undo = getEl("undo");
+    const reset = getEl("reset");
+    const redo = getEl("redo");
+    const shuffle = getEl("shuffle");
+    const solve = getEl("solve");
+    const expand = getEl("expand");
+    const settingsContainer = getEl("settingsContainer");
+    const moves = getEl("moves");
+    const time = getEl("time");
 
 
-    function handleError(err: Error) {
-        errorMessage.innerText = err.stack || err.toString();
+    function handleError(err: Error | string) {
+        err = typeof err == "string" ? err : (err.stack || err.toString());
+        errorMessage.innerText = err;
         errorContainer.classList.add("visible");
         console.error(err);
     }
 
 
-    window.onerror = (msg, src, line, col, err) => handleError(err);
+    window.onerror = (msg, src, line, col, err) => handleError(err || msg.toString());
     window.onunhandledrejection = (ev: PromiseRejectionEvent) => 
         (handleError(ev.reason), ev.preventDefault());
     errorContainer.onclick = () => errorContainer.classList.remove("visible");
@@ -104,8 +115,8 @@ window.onload = () => {
     reset.onclick = () => canvas.reset();
     undo.onclick = () => canvas.undo();
     redo.onclick = () => canvas.redo();
-    shuffle.onclick = () =>
-        canvas.setActor(shuffler = shuffleCube(canvas.cube));
+    shuffle.onclick = () => canvas.setActor(shuffler = shuffleCube(canvas.cube));
+    solve.onclick = () => canvas.setActor(solveCube(canvas.cube));
     expand.onclick = () => settingsContainer.classList.toggle("expanded");
 
     canvas.onNewCube.bind(() => status.clear());

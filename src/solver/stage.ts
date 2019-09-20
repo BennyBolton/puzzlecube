@@ -5,19 +5,16 @@ import { CubeOrientation, CubeAction } from "../model";
 
 
 
-export abstract class ModelAction<M extends StageModel<any>> {
-    constructor(public readonly weight: number) {}
-
-    abstract alterModel(model: M): M;
-    abstract alterCube(cube: CubeOrientation): Iterable<CubeAction>;
+export interface ModelAction<M extends StageModel<any, any>> {
+    readonly length: number;
+    getActions(cube: CubeOrientation): Iterable<CubeAction>;
 }
 
 
 
-export abstract class StageModel<S extends Stage<any>> {
-    abstract getCube(): CubeOrientation;
-    abstract transform(): Iterable<StageModel<S>>;
-    abstract weigh(): number;
+export interface StageModel<S extends Stage<any>, A extends ModelAction<any>> {
+    readonly weight: number;
+    weighAction(action: A): number;
 }
 
 
@@ -25,51 +22,57 @@ export abstract class StageModel<S extends Stage<any>> {
 class BestOption<T> {
     public option = null as T | null;
 
-    constructor(public weight = Infinity) {}
+    constructor(public weight = [Infinity]) {}
 
-    consider(option: T, weight: number) {
-        if (weight < this.weight) {
-            this.option = option;
-            this.weight = weight;
+    consider(option: T, ...weight: number[]) {
+        for (let i = 0; i < this.weight.length; ++i) {
+            if (weight[i] < this.weight[i]) {
+                this.option = option;
+                this.weight = weight;
+            } else if (weight[i] > this.weight[i]) {
+                return;
+            }
         }
     }
 }
 
 
 
-export abstract class Stage<M extends StageModel<any>> {
+export abstract class Stage<M extends StageModel<any, any>> {
+    abstract realign(cube: CubeOrientation): Iterable<CubeOrientation>;
     abstract transform(cube: CubeOrientation): Iterable<CubeOrientation>;
-    abstract makeModel(cube: CubeOrientation): M;
-    abstract getActions(): Iterable<ModelAction<M>>;
+    abstract makeModel(cube: CubeOrientation, weight?: number): M;
+    abstract getActions(model: M): Iterable<ModelAction<M>>;
 
     *runStage(baseCube: CubeOrientation) {
-        let it = this.transform(baseCube)[Symbol.iterator]();
-        let { done, value: cube } = it.next();
-        if (done) return;
+        let best = new BestOption<CubeOrientation>();
+        for (let cube of this.realign(baseCube)) {
+            let model = this.makeModel(cube);
+            best.consider(cube, model.weight);
+        }
+        if (!best.option) return;
 
-        let baseModel = this.makeModel(cube);
-        let baseWeight = baseModel.weigh();
+        baseCube = best.option;
+        let baseWeight = best.weight[0];
 
         while (baseWeight > 0) {
-            let best = new BestOption<[M, ModelAction<M>]>(baseWeight);
-
-            for (let action of this.getActions()) {
-                for (let model of baseModel.transform() as Iterable<M>) {
-                    let weight = action.alterModel(model).weigh();
-                    best.consider([model, action], weight);
+            let best = new BestOption<[CubeOrientation, ModelAction<M>]>
+                ([baseWeight, 0]);
+            for (let cube of this.transform(baseCube)) {
+                let model = this.makeModel(cube, baseWeight);
+                for (let action of this.getActions(model)) {
+                    let weight = model.weighAction(action);
+                    best.consider([cube, action], weight, action.length);
                 }
             }
 
             if (!best.option) break;
-            let [ model, action ] = best.option;
+            let [ cube, action ] = best.option;
 
-            cube = model.getCube();
-            yield* action.alterCube(model.getCube());
-            baseModel = this.makeModel(cube);
-            baseWeight = baseModel.weigh();
-            if (baseWeight != best.weight) {
-                throw new Error("Internal Error: Incorrect weight");
-            }
+            yield* action.getActions(cube);
+
+            baseCube = cube;
+            baseWeight = best.weight[0];
         }
     }
 }

@@ -38,11 +38,19 @@ export const enum CubeColor {
 export class CubeConfig {
     public readonly data: Int8Array;
 
-    constructor(public readonly size: number) {
-        this.data = new Int8Array(this.size * this.size * 6);
-        for (let i = 0; i < this.data.length; ++i) {
-            this.data[i] = Math.floor(i / (size * size));
+    constructor(public readonly size: number, data?: Int8Array) {
+        if (data) {
+            this.data = data.slice();
+        } else {
+            this.data = new Int8Array(this.size * this.size * 6);
+            for (let i = 0; i < this.data.length; ++i) {
+                this.data[i] = Math.floor(i / (size * size));
+            }
         }
+    }
+
+    clone() {
+        return new CubeConfig(this.size, this.data);
     }
 
     isSolved() {

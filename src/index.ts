@@ -3,7 +3,7 @@
 
 import { Settings, CubeCanvas, shuffleCube } from "./application";
 import { solveCube } from "./solver";
-import { CubeAction } from "./model";
+import { CubeAction, CubeConfig } from "./model";
 
 
 
@@ -122,4 +122,44 @@ window.onload = () => {
     canvas.onNewCube.bind(() => status.clear());
     canvas.onAction.bind((action, actor) =>
         actor && actor === shuffler ? status.clear() : status.countMove(action));
+
+
+    getEl("testSolver").onclick = () => {
+        let cube = new CubeConfig(canvas.cube.size);
+        let totalCount = 0, failed = 0, trials = 100, min = Infinity, max = -Infinity;
+        let time = Date.now();
+        for (let i = 0; i < trials; ++i) {
+            let count = 0;
+            for (let action of shuffleCube(cube)) {
+                action.act();
+                if (++count >= 100) break;
+            }
+            count = 0;
+            for (let action of solveCube(cube)) {
+                action.act();
+                count += Math.abs(action.angle);
+            }
+            if (!cube.isSolved()) ++failed;
+            totalCount += count;
+            if (count < min) min = count;
+            if (count > max) max = count;
+        }
+        console.log(JSON.stringify({
+            avgTime: (Date.now() - time) / trials,
+            trials, avg: totalCount / trials, min, max, failed
+        }, null, 2));
+        if (failed > 0) {
+            console.error(new Error("Didn't work"));
+        }
+
+        // {trials: 100, avg: 110.93, min: 77, max: 141, failed: 0}
+        /* {
+            "avgTime": 5.75,
+            "trials": 100,
+            "avg": 92.21,
+            "min": 59,
+            "max": 113,
+            "failed": 0
+        }*/
+    }
 }

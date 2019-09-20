@@ -18,6 +18,11 @@ export class CubeOrientation {
         public readonly front: Face = Face.Front
     ) {}
 
+    clone() {
+        return new CubeOrientation(this.config.clone(),
+            this.right, this.top, this.front);
+    }
+
     reorient(right: Face, top: Face, front: Face) {
         return new CubeOrientation(
             this.config,

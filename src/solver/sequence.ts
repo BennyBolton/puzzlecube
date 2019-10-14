@@ -27,7 +27,7 @@ class SequenceMove {
 
 
 export class Sequence {
-    private static regex = /([LRDUBF])(2|'|\((-?[0-9]+)\))?(\+([0-9]+)(:([0-9]+)))?/g;
+    private static regex = /([LRDUBF])(2|'|\((-?[0-9]+)\))?(\+([0-9]+)(:([0-9]+))?)?/g;
 
     private readonly moves = [] as SequenceMove[];
 

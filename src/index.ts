@@ -129,6 +129,10 @@ window.onload = () => {
         let totalCount = 0, failed = 0, trials = 100, min = Infinity, max = -Infinity;
         let time = Date.now();
         for (let i = 0; i < trials; ++i) {
+            if (Date.now() - time > 1000) {
+                trials = i;
+                break;
+            }
             let count = 0;
             for (let action of shuffleCube(cube)) {
                 action.act();
@@ -144,22 +148,14 @@ window.onload = () => {
             if (count < min) min = count;
             if (count > max) max = count;
         }
-        console.log(JSON.stringify({
+        let result = JSON.stringify({
             avgTime: (Date.now() - time) / trials,
             trials, avg: totalCount / trials, min, max, failed
-        }, null, 2));
+        }, null, 2);
+        alert(result)
+        console.log(result);
         if (failed > 0) {
             console.error(new Error("Didn't work"));
         }
-
-        // {trials: 100, avg: 110.93, min: 77, max: 141, failed: 0}
-        /* {
-            "avgTime": 5.75,
-            "trials": 100,
-            "avg": 92.21,
-            "min": 59,
-            "max": 113,
-            "failed": 0
-        }*/
     }
 }

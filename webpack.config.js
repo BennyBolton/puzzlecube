@@ -2,7 +2,7 @@ const { join } = require("path");
 
 module.exports = {
     entry: "./src/index.ts",
-    devtool: "inline-source-map",
+    devtool: "source-map",
     module: {
         rules: [
             {
@@ -13,6 +13,11 @@ module.exports = {
             {
                 test: /\.glsl$/,
                 use: "raw-loader",
+                exclude: /node_modules/
+            },
+            {
+                test: /\.png/,
+                use: "url-loader",
                 exclude: /node_modules/
             }
         ]

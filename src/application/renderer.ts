@@ -5,8 +5,8 @@ import { CubeAction, Face, Axis } from "../model";
 import { Program, Canvas, Shader, Texture, Context, Buffer } from "../gl";
 import { Vector, UnitSpace } from "../math";
 
-import fragmentSrc from "./shaders/fragment.glsl";
-import vertexSrc from "./shaders/vertex.glsl";
+import fragmentSrc from "./resources/fragment.glsl";
+import vertexSrc from "./resources/vertex.glsl";
 
 
 

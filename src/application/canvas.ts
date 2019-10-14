@@ -9,6 +9,8 @@ import { CubeAction, CubeConfig, Face } from "../model";
 import { Vector } from "../math";
 import { Hook } from "../util";
 
+import pieceTextureSrc from "./resources/piece.png";
+
 
 
 const MAX_CUBE_SIZE = 512;
@@ -17,7 +19,7 @@ const MAX_CUBE_SIZE = 512;
 
 export class CubeCanvas extends Canvas {
     private readonly renderer = Renderer.make(this);
-    private readonly pieceTexture = this.createTexture("piece.png");
+    private readonly pieceTexture = this.createTexture(pieceTextureSrc);
     private readonly undoList = [] as CubeAction[];
     private readonly redoList = [] as CubeAction[];
     private actor: Iterator<CubeAction> | null = null;

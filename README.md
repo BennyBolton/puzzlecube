@@ -18,7 +18,7 @@ To build, run `npm install` and `npm run build`. This will build the
 USAGE
 -----
 
-Once build, the program can be used either by opening `public/index.html`
+Once built, the program can be used either by opening `public/index.html`
 directly, or by running `node . <port>` to launch a quick web server that can
 be used to access it. The program has only been tested using Chrome, though it
 will require a modern browser supporting ES6 features.
@@ -27,10 +27,10 @@ In the program, the left mouse button can be to alter cube, and either the
 right mouse button, or the left mouse button when clicking off of the cube, can
 be used to rotate the cube.
 
-Various settings, include the cube size, can be altered by opening the settings
-pane by clicking at the left side of the screen. These settings will take
-effect immediately, and are stored in LocalStorage so that they are retained
-after closing the page.
+Various settings, including the cube size, can be altered by opening the
+settings pane by clicking at the left side of the screen. These settings will
+take effect immediately, and are stored in LocalStorage so that they are
+retained after closing the page.
 
 `Reset`, `Undo` and `Redo` buttons are made available at the top of the screen.
 The `Shuffle` button can be used to continuously shuffle the cube until the
